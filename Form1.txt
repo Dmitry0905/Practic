@@ -1,0 +1,622 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace WindowsFormsApp1
+{
+    public partial class Form1 : Form
+    {
+        private Graphics graphics;/*переменная графики для отрисовки */
+        private int resolution = 10;/*размер одной клетни*/
+        public int cols;/*количество колонок*/
+        public int rows;/*количество рядов*/
+      
+        private Predator[,] pr;/*Массив хищников*/
+        private Herbivore[,] her;/*Массив насекомоядных*/
+        private Soil[,] sol;/*Массив почвы*/
+        private Bug[,] bug;/*Массив массив насекомых*/
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        private int Predators;/*Коло-во хищников*/
+        private int Herbivores;/*Коло-во насекомоядных*/
+        private int Bugs;/*Коло-во насекомых*/
+        private int generation;/*Текущее поколение*/
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            chart1.Visible = false;/*Установка соответствующей видимости*/
+            chart1.Series[0].Points.Clear();/*Очистка графика*/
+            chart1.Series[1].Points.Clear();/*Очистка графика*/
+            chart1.Series[2].Points.Clear();/*Очистка графика*/
+            numericUpDown1.Enabled = false;/*Установка соответствующей доступности*/
+            numericUpDown2.Enabled = false;/*Установка соответствующей доступности*/
+            numericUpDown3.Enabled = false;/*Установка соответствующей доступности*/
+            numericUpDown4.Enabled = false;/*Установка соответствующей доступности*/
+            timer1.Interval = (int)numericUpDown4.Value;
+            generation = 0;
+            /*Установка кол-ва животных*/
+            Predators = (int)numericUpDown1.Value;
+            Herbivores= (int)numericUpDown2.Value;
+            Bugs = (int)numericUpDown3.Value;
+            /*Установка кол-ва колонок и рядорв*/
+            rows = pictureBox1.Height / resolution;
+             cols = pictureBox1.Width / resolution;
+           /*Создание массивов*/
+             pr = new Predator[cols, rows];
+             her = new Herbivore[cols, rows];
+             sol=new Soil[cols, rows];
+             bug=new Bug[cols, rows];
+
+
+            
+
+            /*Инициализаци массивов*/
+            for (int x = 0; x < cols; x++)
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    Herbivore h = new Herbivore();
+                    Predator p = new Predator();
+                    Soil s = new Soil();
+                    Bug b = new Bug();
+                   
+                    her[x, y] = h;
+                    pr[x, y] = p;
+                    sol[x, y] = s;
+                    bug[x, y] = b;
+                }
+            }
+
+            pictureBox1.Image = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+            graphics = Graphics.FromImage(pictureBox1.Image);
+            graphics.Clear(Color.Black);
+           
+            Random random = new Random();
+            int k = 0;
+           while(k!=Predators)/*Распределение хищников*/
+            {
+                int i = random.Next(cols);
+                int j = random.Next(rows);
+                if(sol[i,j].cell==Soil.cells.SELF)
+                {
+                    sol[i, j].cell = Soil.cells.PREDATOR;
+                    pr[i, j].tip = Predator.t.SELF;
+                    k++;
+                }
+            }
+            k = 0;
+            while (k != Herbivores)/*Распределение насекомоядных*/
+            {
+                int i = random.Next(cols);
+                int j = random.Next(rows);
+                if (sol[i, j].cell == Soil.cells.SELF)
+                {
+                    sol[i, j].cell = Soil.cells.HERBIVORE;
+                    her[i, j].tip = Herbivore.t.SELF;
+                    k++;
+                }
+            }
+            k = 0;
+            while (k != Bugs)/*Распределение насекомых*/
+            {
+                int i = random.Next(cols);
+                int j = random.Next(rows );
+                if (sol[i, j].cell == Soil.cells.SELF)
+                {
+                    sol[i, j].cell = Soil.cells.BUG;
+                   bug[i, j].tip = Bug.t.SELF;
+                    k++;
+                }
+            }
+            
+            for (int x = 0; x < cols; x++)/*Начальная отрисовка*/
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                   
+                    if (sol[x,y].cell==Soil.cells.HERBIVORE)
+                    {
+                        graphics.FillRectangle(Brushes.Green, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                   else if (sol[x, y].cell == Soil.cells.PREDATOR)
+                    {
+                        graphics.FillRectangle(Brushes.Red, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                  else  if (sol[x, y].cell == Soil.cells.SELF && sol[x, y].con == Soil.condition.NOGRASS)
+                    {
+                        graphics.FillRectangle(Brushes.Yellow, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                    else if (sol[x, y].cell == Soil.cells.BUG)
+                    {
+                        graphics.FillRectangle(Brushes.Gray, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                 else   if (sol[x, y].cell == Soil.cells.SELF&& sol[x, y].con==Soil.condition.GRASS)
+                    {
+                        graphics.FillRectangle(Brushes.Lime, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                }
+            }
+            
+            timer1.Start();/*Запуск таймера*/
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            /*Создание промежуточных массивом */
+           Predator[,] prr = new Predator[cols, rows];
+           Herbivore[,] herr = new Herbivore[cols, rows];
+            Bug [,] bg=new Bug[cols, rows];
+            Soil [,] sl = new Soil[cols, rows];
+            generation++;/*Инкремент поколения*/
+            label17.Text = "Текущее поколение: " + generation.ToString();
+            /*Обновление промежуточных массивов*/
+            prr = pr;
+            herr = her;
+            sl = sol;
+            bg = bug;
+            graphics.Clear(Color.Black);
+
+           
+
+            for (int x = 0; x < cols; x++)/*Жуки - размножение*/
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    sl[x, y].check_Grass();
+                    sl[x, y].time_Tick();
+                    int x1 = -1;
+                    int y1 = -1;
+                    int x2 = -1;
+                    int y2 = -1;
+                    if(sol[x,y].cell==Soil.cells.SELF)/*Для клетки  - почва*/
+                    {
+                        
+                        int countNeigbors =sol[x, y].count_Bug(sol, x, y, cols, rows);/*Подсчет жуков*/
+                        sol[x, y].Bugs(sol, x, y, cols, rows, ref x1, ref y1);/*Поиск жуков*/
+
+                        if (countNeigbors >= 3 && sol[x, y].con == Soil.condition.GRASS)/*Если есть травав и нужное кол-во соседей, то происходит размножение*/
+                        {
+                            sl[x, y].cell = Soil.cells.BUG;
+                            bg[x, y].tip = Bug.t.SELF;
+                            int meal = 15;
+                            bg[x, y].set_Meal(meal);  
+                            Bugs++;
+                        }
+                       
+                    }
+                     if (sol[x, y].cell == Soil.cells.BUG)
+                    {
+                        sl[x, y].bug_eat();/*Питание жука*/
+                        int countNeigbors = sol[x, y].count_Bug(sol, x, y, cols, rows);/*Подсчет жуков*/
+                        sol[x, y].Bugs(sol, x, y, cols, rows, ref x1, ref y1);/*Поиск жуков*/
+                        sol[x, y].Grass(sol, x, y, cols, rows, ref x2, ref y2);/*Поиск еды для жуков*/
+                        if (countNeigbors >= 6&& x2 == -1 && y2 == -1)/*Если кол-во соседей больше  и нет еды, то жук голодает*/
+                        {
+                            int eat = bg[x, y].get_Meal();
+                            eat -= 2;
+                            bg[x, y].set_Meal(eat);
+                        }
+                       
+                    }
+                }
+            }
+            /*Обновление массивов*/
+                pr = prr;
+                her = herr;
+                sol = sl;
+                bug = bg;
+
+
+                prr = pr;
+                herr = her;
+                sl = sol;
+                bg = bug;
+
+            for (int x = 0; x < cols; x++)/*Насекомоядные - питание*/
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    int x1 = -1;
+                    int y1 = -1;
+                    int x2 = -1;
+                    int y2 = -1;
+                    if (sol[x, y].cell == Soil.cells.BUG)/*Для клетки - насекомое*/
+                    {
+                        int countNeigbors = sol[x, y].count_Herbivore(sol, x, y, cols, rows);/*подсчет насекомоядных*/
+                        sol[x, y].Herbivores(sol, x, y, cols, rows, ref x1, ref y1);/*поиск наскомоядных*/
+                        if (x1 != -1 && y1 != -1)/*если есть насекомоядное, то насекомоядное питается*/
+                        {
+                            sl[x, y].cell = Soil.cells.HERBIVORE;
+                            sl[x1, y1].cell = Soil.cells.SELF;
+                            herr[x, y].tip = Herbivore.t.SELF;
+                           herr[x1, y1].tip = Herbivore.t.NULL;
+                           bg[x, y].tip = Bug.t.NULL;
+
+                            herr[x, y].set_Meal(15);
+                            Bugs--;
+                        }
+
+
+
+
+                    }
+                   
+                }
+            }
+
+            /*Обновление массивов*/
+            pr = prr;
+            her = herr;
+            sol = sl;
+            bug = bg;
+
+            prr = pr;
+            herr = her;
+            sl = sol;
+            bg = bug;
+            for (int x = 0; x < cols; x++)/*Насекомоядные- размножение*/
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    int x1 = -1;
+                    int y1 = -1;
+                    int x2 = -1;
+                    int y2 = -1;
+                    if (sol[x, y].cell == Soil.cells.SELF)/*для клетки почва*/
+                    {
+                        int countNeigbors = sol[x, y].count_Herbivore(sol, x, y, cols, rows);/*подсчет насекомоядных*/
+                      
+                        sol[x, y].Bugs(sol, x, y, cols, rows, ref x2, ref y2);/*Поиск насекомых*/
+
+
+                        if (countNeigbors >= 2 && x2 != -1 && y2 != -1)/*Если достаточно соседей  и есть насекомое рядом, то размножение*/
+                        {
+                            sl[x, y].cell = Soil.cells.HERBIVORE;
+                            herr[x, y].tip = Herbivore.t.SELF;
+                           Herbivores++;
+                            int meal = 15;
+                            herr[x, y].set_Meal(meal);
+
+                        }
+
+
+
+                    }
+                    else if (sol[x, y].cell == Soil.cells.HERBIVORE)/*для клетки насекомоядное*/
+                    {
+                        int countNeigbors = sol[x, y].count_Herbivore(sol, x, y, cols, rows);/*Подсчет*/
+                        
+                        sol[x, y].Bugs(sol, x, y, cols, rows, ref x2, ref y2);/*Поиск жуков*/
+       
+                        if (x2 == -1 && y2 == -1)/*Если нет жуков, то насекомоядное голодает*/
+                        {
+
+                            int eat = herr[x, y].get_Meal();
+                            eat -= 3;
+                            herr[x, y].set_Meal(eat);
+                            Herbivores += herr[x, y].check_Meal(sol, x, y);
+                        }
+                        
+                    }
+                }
+
+            }
+           
+            /*Обновление массивов*/
+            pr = prr;
+            her = herr;
+            sol = sl;
+            bug = bg;
+
+            prr = pr;
+            herr = her;
+            sl = sol;
+            bg = bug;
+
+            for (int x = 0; x < cols; x++)/*Хищники - питание*/
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    int x1 = -1;
+                    int y1 = -1;
+                    int x2 = -1;
+                    int y2 = -1;
+                    if (sol[x, y].cell == Soil.cells.HERBIVORE)/*для клетки насекомоядное*/
+                    {
+                        int countNeigbors = sol[x, y].count_Predator(sol, x, y, cols, rows);/*Подсчет*/
+                        sol[x, y].Predators(sol, x, y, cols, rows, ref x1, ref y1);/*Поиск хищников*/
+                        if (x1 != -1 && y1 != -1)/*Если есть хищники, то они питаются*/
+                        {
+                            sl[x, y].cell = Soil.cells.PREDATOR;
+                            sl[x1, y1].cell = Soil.cells.SELF;
+                            prr[x, y].tip = Predator.t.SELF;
+                            prr[x1, y1].tip = Predator.t.NULL;
+                            herr[x, y].tip = Herbivore.t.NULL;
+                           
+                            prr[x, y].set_Meal(15);
+                            Herbivores--;
+                        }
+
+                    }
+                  
+                }
+            }
+           
+            /*Обновление массивов*/
+            pr = prr;
+            her = herr;
+            sol = sl;
+            bug = bg;
+
+            prr = pr;
+            herr = her;
+            sl = sol;
+            bg = bug;
+
+            for (int x = 0; x < cols; x++)/*Хищники- размножение*/
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    int x1 = -1;
+                    int y1 = -1;
+                    int x2 = -1;
+                    int y2 = -1;
+                    if (sol[x, y].cell == Soil.cells.SELF)/*для клетки - почва*/
+                    {
+                        int countNeigbors = sol[x, y].count_Predator(sol, x, y, cols, rows);/*подсчет*/
+                 
+                        sol[x, y].Herbivores(sol, x, y, cols, rows, ref x2, ref y2);/*Поиск насекомоядных*/
+                    
+
+                        if (countNeigbors >= 2 && x2 != -1 && y2 != -1)/*Если условия выполняются, то происходит размнодение*/
+                        {
+                            sl[x, y].cell = Soil.cells.PREDATOR;
+                            prr[x, y].tip =Predator.t.SELF;
+                            Predators++;
+                            int meal = 15;
+                          prr[x, y].set_Meal(meal);
+                           
+                        }
+                      
+                            
+
+                    }
+                    else if (sol[x, y].cell == Soil.cells.PREDATOR)/*для клетки - хищник*/
+                    {
+                        int countNeigbors = sol[x, y].count_Predator(sol, x, y, cols, rows);/*подсчет*/
+                      
+                        sol[x, y].Herbivores(sol, x, y, cols, rows, ref x2, ref y2);/*Поиск насекомоядных*/
+                       
+                       if (x2 == -1 && y2 == -1)/*Если их нет, то происходт голодание*/
+                        {
+
+                            int eat = prr[x, y].get_Meal();
+                            eat -= 4;
+                            prr[x, y].set_Meal(eat);
+                        }
+                       Predators += prr[x, y].check_Meal(sol, x, y);
+                    }
+                }
+            }
+           
+
+           
+           
+            /*Обновление массивов*/
+            pr = prr;
+            her = herr;
+            sol = sl;
+            bug = bg;
+
+            prr = pr;
+            herr = her;
+            sl = sol;
+            bg = bug;
+            for (int x = 0; x < cols; x++)/*Жуки - питание*/
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    int x1 = -1;
+                    int y1 = -1;
+                    int x2 = -1;
+                    int y2 = -1;
+                    sl[x, y].check_Grass();
+                    sl[x, y].time_Tick();
+
+                    if (sol[x, y].cell == Soil.cells.SELF)/*Для клетки - почва*/
+                    {
+
+                        int countNeigbors = sol[x, y].count_Bug(sol, x, y, cols, rows);/*подсчет жуков*/
+                        sol[x, y].Bugs(sol, x, y, cols, rows, ref x1, ref y1);/*поиск жуков*/
+                        if (x1 != -1 && y1 != -1 && sol[x, y].con == Soil.condition.GRASS)/*если есть жук и трава, то жук питается*/
+                        {
+
+                            sl[x, y].cell = Soil.cells.BUG;
+                            sl[x1, y1].cell = Soil.cells.SELF;
+
+
+                            bg[x, y].tip = Bug.t.SELF;
+                            bg[x1, y1].tip = Bug.t.NULL;
+                            
+                            bg[x, y].set_Meal(15);
+                        }
+                        else/*иначе жук голодает*/
+                        {
+                            int eat = bg[x, y].get_Meal();
+                            eat -= 3;
+                            bg[x, y].set_Meal(eat);
+
+                        }
+                        Bugs += bg[x, y].check_Meal(sl, x, y);
+                    }
+
+                }
+            }
+            /*Обновлеине массивов*/
+            pr = prr;
+            her = herr;
+            sol = sl;
+            bug = bg;
+
+            prr = pr;
+            herr = her;
+            sl = sol;
+            bg = bug;
+
+            for (int x = 0; x < cols; x++)/*Передвижение*/
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    int x1 = -1;
+                    int y1 = -1;
+                    int x2 = -1;
+                    int y2 = -1;
+                   
+                    if(sol[x,y].cell==Soil.cells.SELF)/*Для клеток - почва*/
+                    {
+                        int herb=sol[x, y].count_Herbivore(sol,x,y,cols,rows);/*подсчет насекомоядных*/
+                        int pred= sol[x, y].count_Predator(sol, x, y, cols, rows);/*подсчет хищников*/
+
+
+                        if (herb!=0 && pred !=0)/*Если есть оба, то передвигается хищник к добыче*/
+                        {
+                            sol[x, y].Predators(sol, x, y, cols, rows, ref x1, ref y1);
+                            if (x1 != -1 && y1 != -1)
+                            {
+                                prr[x, y].tip = Predator.t.SELF;
+                                sl[x, y].cell = Soil.cells.PREDATOR;
+                                prr[x1, y1].tip = Predator.t.NULL;
+                                sl[x1, y1].cell = Soil.cells.SELF;
+                            }
+                        }
+
+                         if(herb == 0 && pred != 0)/*если нет хищника то двигается насекомоядное*/
+                        {
+                            sol[x, y].Predators(sol, x, y, cols, rows, ref x1, ref y1);
+                            if (x1 != -1 && y1 != -1)
+                            {
+                                prr[x, y].tip = Predator.t.SELF;
+                                sl[x, y].cell = Soil.cells.PREDATOR;
+                                prr[x1, y1].tip = Predator.t.NULL;
+                                sl[x1, y1].cell = Soil.cells.SELF;
+                            }
+                        }
+                         if(herb != 0 && pred == 0)/*иначе двигается хищник*/
+                        {
+                            sol[x, y].Herbivores(sol, x, y, cols, rows, ref x1, ref y1);
+                            if (x1 != -1 && y1 != -1)
+                            {
+                                herr[x, y].tip = Herbivore.t.SELF;
+                                sl[x, y].cell = Soil.cells.HERBIVORE;
+                                herr[x1, y1].tip = Herbivore.t.NULL;
+                                sl[x1, y1].cell = Soil.cells.SELF;
+                            }
+                        }
+                       
+                    }
+                }
+            }
+
+            pr = prr;
+            her = herr;
+            sol = sl;
+            bug = bg;
+
+            /*Отрисовка*/
+            for (int x = 0; x < cols; x++)
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                   
+                    if (sol[x, y].cell == Soil.cells.HERBIVORE)
+                    {
+                        graphics.FillRectangle(Brushes.Green, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                  else  if (sol[x, y].cell == Soil.cells.PREDATOR)
+                    {
+                        graphics.FillRectangle(Brushes.Red, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                   else if (sol[x, y].cell == Soil.cells.SELF && sol[x, y].con == Soil.condition.NOGRASS)
+                    {
+                        graphics.FillRectangle(Brushes.Yellow, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                    else if (sol[x, y].cell == Soil.cells.BUG)
+                    {
+                        graphics.FillRectangle(Brushes.Gray, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                    else if (sol[x, y].cell == Soil.cells.SELF && sol[x, y].con == Soil.condition.GRASS)
+                    {
+                        graphics.FillRectangle(Brushes.Lime, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                    }
+                }
+            }
+
+            label8.Text = Predators.ToString();
+            label9.Text = Herbivores.ToString();
+            label10.Text = Bugs.ToString();
+            
+            chart1.Series[0].Points.AddXY(generation, Bugs);
+            chart1.Series[1].Points.AddXY( generation, Herbivores);
+            chart1.Series[2].Points.AddXY( generation, Predators);
+            pictureBox1.Refresh();
+
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            timer1.Stop();
+            
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            rows = pictureBox1.Height / resolution;
+            cols = pictureBox1.Width / resolution;
+            int max = cols * rows;
+            label1.Text = "Общее количество клеточек на карте: " + max.ToString();
+            Text = "Модель развития популяций животных";
+            label17.Text = "Текущее поколение: " + generation.ToString();
+            label8.Text = Predators.ToString();
+            label9.Text = Herbivores.ToString();
+            label10.Text = Bugs.ToString();
+            chart1.Series[0].Points.Clear();
+            chart1.Series[1].Points.Clear();
+            chart1.Series[2].Points.Clear();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            chart1.Visible = false;
+            timer1.Start();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            chart1.Visible = true;
+            timer1.Stop();
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+           
+
+            numericUpDown1.Enabled = true;
+            numericUpDown2.Enabled = true;
+            numericUpDown3.Enabled = true;
+            numericUpDown4.Enabled = true;
+        }
+    }
+}

@@ -1,0 +1,43 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace WindowsFormsApp1
+{
+    public class Predator : Animal
+    {
+        
+        
+        public t tip;/*Тип*/
+
+
+
+        public Predator()/*Конструктор класса*/
+        {
+           
+            tip = Predator.t.NULL;
+            set_Meal(15);
+        }
+      
+        public int check_Meal(Soil [,] arr, int a, int b)
+        {
+            if(get_Meal()<=0 && tip==Predator.t.SELF)/*Если уровень насыщенности равен 0, то животное умирает*/
+            {
+                tip = Predator.t.NULL;
+                arr[a, b].cell = Soil.cells.SELF;
+                return -1;
+            }
+           else if(get_Meal() >= 20)/*Если уровень насыщенности больше или равен максимуму, то уровень насыщенности выставляется по максимуму*/
+            {
+                set_Meal(20);
+                return 0;
+            }
+            return 0;
+        }
+       
+      
+    }
+}

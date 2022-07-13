@@ -1,0 +1,222 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WindowsFormsApp1
+{
+    public class Soil
+    {
+      
+        public enum condition
+        {
+            NOGRASS,
+            GRASS
+        }
+        public enum cells
+        {
+            SELF,
+            BUG,
+            HERBIVORE,
+            PREDATOR
+        }
+        public condition con;/*Состояние*/
+        public cells cell;/*Определяет, кто стоит на ячейке*/
+        private int time;/*Время возобновления травы*/
+
+        public void check_Grass()/*Проверка состояния покрова*/
+        {
+            if (time >= 3)
+            {
+               con = Soil.condition.GRASS;
+                time = 1;
+            }
+        }
+        public void time_Tick()/*Увеличение времени  возобновления травы*/
+        {
+            time++;
+        }
+        public void bug_eat()/*Поедание травы насекомым*/
+        {
+           
+                con = Soil.condition.NOGRASS;/*Устанавливается состояние без травы*/
+                time = 0;
+           
+            
+        }
+
+        public Soil()/*конструктор класса*/
+        {
+           con = Soil.condition.GRASS;
+           cell = Soil.cells.SELF;
+            time = 1;
+        }
+     
+        public void Grass(Soil[,] arr, int Val_x, int Val_y, int cols, int rows, ref int x1, ref int y1)/*Поиск пищи для насекомого*/
+        {
+
+            for (int i = -1; i < 2; i++)
+            {
+                for (int j = -1; j < 2; j++)
+                {
+                    int col = (Val_x + i + cols) % cols;/*координаты*/
+                    int row = (Val_y + j + rows) % rows;/*координаты*/
+                    bool self = false;
+
+                    if (arr[col, row].cell == Soil.cells.SELF && arr[col, row].con==Soil.condition.GRASS)/*Если данная ячейка почва с травой, то возвращаются координаты этой ячейки*/
+                    {
+
+                        x1 = col;
+                        y1 = row;
+                    }
+
+
+
+                }
+            }
+
+        }
+
+        public int count_Bug(Soil[,] arr, int Val_x, int Val_y, int cols, int rows)/*Подсчет насекомых для данной ячейки*/
+        {
+            int count = 0;
+            for (int i = -1; i < 2; i++)
+            {
+                for (int j = -1; j < 2; j++)
+                {
+                    int col = (Val_x + i + cols) % cols;/*координаты*/
+                    int row = (Val_y + j + rows) % rows;/*координаты*/
+                    bool self = false;
+                    if (col == Val_x && row == Val_y)/*Если координаты совпадают с переданными, то ячейка выходит на саму себя*/
+                    {
+                        self = true;/*Устанавливается флаг самопроверки*/
+                    }
+
+
+                    if (arr[col, row].cell==Soil.cells.BUG && self != true)/*Если данная ячейка - насекомое, то счетчик увеличивается на 1*/
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        public void Bugs(Soil[,] arr, int Val_x, int Val_y, int cols, int rows, ref int x1, ref int y1)/*Поиск насекомого для данной клетки*/
+        {
+            for (int i = -1; i < 2; i++)
+            {
+                for (int j = -1; j < 2; j++)
+                {
+                    int col = (Val_x + i + cols) % cols;/*координаты*/
+                    int row = (Val_y + j + rows) % rows;/*координаты*/
+                    bool self = false;
+                   
+                    if (arr[col, row].cell == Soil.cells.BUG)/*Если очередная клетка - насекомое, то воращаются координаты этой клетки*/
+                    {
+                        
+                        x1 = col;
+                        y1 = row;
+                    }
+
+                }
+            }
+    
+        }
+
+        public int count_Herbivore(Soil[,] arr, int Val_x, int Val_y, int cols, int rows)/*Подсчет насекомоядных для данной ячейки*/
+        {
+            int count = 0;
+            for (int i = -1; i < 2; i++)
+            {
+                for (int j = -1; j < 2; j++)
+                {
+                    int col = (Val_x + i + cols) % cols;/*координаты*/
+                    int row = (Val_y + j + rows) % rows;/*координаты*/
+                    bool self = false;
+                    if (col == Val_x && row == Val_y)/*Если координаты совпадают с переданными, то ячейка выходит на саму себя*/
+                    {
+                        self = true;/*Устанавливается флаг самопроверки*/
+                    }
+
+
+                    if (arr[col, row].cell == Soil.cells.HERBIVORE && self != true)/*Если данная ячейка - насекомоядное, то счетчик увеличивается на 1*/
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        public void Herbivores(Soil[,] arr, int Val_x, int Val_y, int cols, int rows, ref int x1, ref int y1)/*Поиск насекомоядного для данной клетки*/
+        {
+            for (int i = -1; i < 2; i++)
+            {
+                for (int j = -1; j < 2; j++)
+                {
+                    int col = (Val_x + i + cols) % cols;/*координаты*/
+                    int row = (Val_y + j + rows) % rows;/*координаты*/
+                    bool self = false;
+
+                    if (arr[col, row].cell == Soil.cells.HERBIVORE)/*Если очередная клетка - насекомоядное, то воращаются координаты этой клетки*/
+                    {
+
+                        x1 = col;
+                        y1 = row;
+                    }
+
+
+
+                }
+            }
+        }
+
+        public int count_Predator(Soil[,] arr, int Val_x, int Val_y, int cols, int rows)/*Подсчет хищников для данной ячейки*/
+        {
+            int count = 0;
+            for (int i = -1; i < 2; i++)
+            {
+                for (int j = -1; j < 2; j++)
+                {
+                    int col = (Val_x + i + cols) % cols;/*координаты*/
+                    int row = (Val_y + j + rows) % rows;/*координаты*/
+                    bool self = false;
+                    if (col == Val_x && row == Val_y)/*Если координаты совпадают с переданными, то ячейка выходит на саму себя*/
+                    {
+                        self = true;/*Устанавливается флаг самопроверки*/
+                    }
+
+
+                    if (arr[col, row].cell == Soil.cells.PREDATOR && self != true)/*Если данная ячейка - насекомоядное, то счетчик увеличивается на 1*/
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        public void Predators(Soil[,] arr, int Val_x, int Val_y, int cols, int rows, ref int x1, ref int y1)/*Поиск хищника для данной клетки*/
+        {
+            for (int i = -1; i < 2; i++)
+            {
+                for (int j = -1; j < 2; j++)
+                {
+                    int col = (Val_x + i + cols) % cols;/*координаты*/
+                    int row = (Val_y + j + rows) % rows;/*координаты*/
+                    bool self = false;
+                    if (arr[col, row].cell == Soil.cells.PREDATOR)/*Если очередная клетка - хищник, то воращаются координаты этой клетки*/
+                    {
+
+                        x1 = col;
+                        y1 = row;
+                    }
+                }
+            }
+        }
+
+       
+    }
+}

@@ -1,0 +1,28 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WindowsFormsApp1
+{
+    public class Animal
+    {
+
+        public enum t
+        {
+            SELF,
+            NULL
+        }
+
+        private int meal;/*Тип*/
+        public int get_Meal()/*Возвращает уровень насыщенности*/
+        {
+            return this.meal;
+        }
+        public void set_Meal(int a)/*устанавливает  уровень насыщенности*/
+        {
+            meal = a;
+        }
+    }
+}
